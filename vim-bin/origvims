@@ -63,8 +63,5 @@ if [[ $VIMS_EXIT_DBG == 1 ]]; then
     exit 0
 fi
 
-if [[ $VIMS_FLAVOR == nvim ]]; then
-    export VIMRUNTIME=/home/snuc/installations/neovim/target/share/nvim/runtime
-fi
 exec "$orig_exe" "${passedargs[@]}"
 
