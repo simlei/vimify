@@ -1,4 +1,3 @@
-exec printf('echom "sourcing %s"', expand("<sfile>:p"))
 if ! exists("g:vimruntime.ignore_further_bootstrapping") || g:vimruntime.ignore_further_bootstrapping != 1
     let g:vimruntime.ignore_further_bootstrapping = 1
     if expand("$VIMINIT") !=# '$VIMINIT'

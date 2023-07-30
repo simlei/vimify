@@ -33,14 +33,6 @@ for envvar in "${envs_undocumented_to_unset[@]}"; do
     unset "$envvar"
 done
 
-# echo VIM: $VIM
-# echo NVIM: $NVIM
-# echo MYVIMRC: $MYVIMRC 
-# echo MYGVIMRC: $MYGVIMRC 
-echo VIMRUNTIME: $VIMRUNTIME 
-# echo VIMINIT: $VIMINIT 
-# echo EXINIT: $EXINIT
-
 # for archive and later purposes (unused now effectively 2023/07/03)
 export VIMINIT_ORIG="$VIMINIT"
 
