@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+_declare_dirvar() { local _dir="$(readlink -f "${BASH_SOURCE[0]}")"; _dir="${_dir%/*}"; local varname="${1:-dir}"; local count="${2:-1}"; while [[ "$count" -gt 0 ]]; do _dir="${_dir%/*}"; let count-- || :; done; eval "$varname"'="$_dir"'; }
+_declare_dirvar path 0
+_declare_dirvar localvimsdir 1
+
+"$localvimsdir/vim-bin/origvims" nvim "$@"
+

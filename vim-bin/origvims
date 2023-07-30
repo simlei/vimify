@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 0 ]]; then
+    if [[ "$1" == "vim" || "$1" == "nvim" ]]; then
+        VIMS_FLAVOR="$1"
+        shift
+    else
+        echo "Usage: $0 {nvim|vim} <vim args>"
+        exit 1
+    fi
+else
+    echo "Usage: $0 {nvim|vim} <vim args>"
+    exit 1
+fi
+
+
+_declare_dirvar() { local _dir="$(readlink -f "${BASH_SOURCE[0]}")"; _dir="${_dir%/*}"; local varname="${1:-dir}"; local count="${2:-1}"; while [[ "$count" -gt 0 ]]; do _dir="${_dir%/*}"; let count-- || :; done; eval "$varname"'="$_dir"'; }
+
+_declare_dirvar path 0
+_declare_dirvar localvimdir 1
+
+declare -n VIMS_OVERRIDE_FLAVORED_ORIG="VIMS_OVERRIDE_${VIMS_FLAVOR^^}_ORIG"
+
+if [[ -n "$VIMS_OVERRIDE_FLAVORED_ORIG" ]]; then
+
+    if [[ -n "$VIMS_OVERRIDE_FLAVORED_ORIG" ]]; then
+        if [[ -x "$VIMS_OVERRIDE_FLAVORED_ORIG" ]]; then
+            orig_exe="$VIMS_OVERRIDE_FLAVORED_ORIG"
+        else
+            echo "ERROR: $VIMS_OVERRIDE_FLAVORED_ORIG is not executable (must be an absolute path, with executable bit, or anything that satisfies 'test -x')" >&2
+            exit 1
+        fi
+    else
+        orig_exe="orig$VIMS_FLAVOR"
+    fi
+else
+    read -r orig_exe < <(
+        export PATH="${PATH//$path:/}"
+        hash -d "$VIMS_FLAVOR"
+        which "$VIMS_FLAVOR"
+    )
+    if [[ -z $orig_exe ]]; then
+        echo "original $VIMS_FLAVOR not found" >&2; exit 1
+    fi
+fi
+
+passedargs=()
+while [[ ! -z ${1:+x} ]]; do
+    if [[ "$1" == "--which" ]]; then
+        echo "actual vim program path: $orig_exe"
+        shift
+        exit 0
+    else
+        passedargs+=("$1")
+        shift
+    fi
+done
+if [[ $VIMS_PRINT_DBG == 1 ]]; then
+    echo VIMS: EXECUTING: "$orig_exe" "${passedargs[@]}" >&2
+fi
+if [[ $VIMS_EXIT_DBG == 1 ]]; then
+    echo VIMS: EXITING BECAUSE OF VIMS_EXIT_DBG >&2
+    exit 0
+fi
+
+if [[ $VIMS_FLAVOR == nvim ]]; then
+    export VIMRUNTIME=/home/snuc/installations/neovim/target/share/nvim/runtime
+fi
+exec "$orig_exe" "${passedargs[@]}"
+

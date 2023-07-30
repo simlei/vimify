@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 0 ]]; then
+    if [[ "$1" == "vim" || "$1" == "nvim" ]]; then
+        VIMS_FLAVOR="$1"
+        shift
+    else
+        echo "Usage: $0 {nvim|vim} <vim args>"
+        exit 1
+    fi
+else
+    echo "Usage: $0 {nvim|vim} <vim args>"
+    exit 1
+fi
+
+_declare_dirvar() { local _dir="$(readlink -f "${BASH_SOURCE[0]}")"; _dir="${_dir%/*}"; local varname="${1:-dir}"; local count="${2:-1}"; while [[ "$count" -gt 0 ]]; do _dir="${_dir%/*}"; let count-- || :; done; eval "$varname"'="$_dir"'; }
+
+_declare_dirvar path 0
+_declare_dirvar localvimsdir 1
+
+# this points to the actual executable
+origvimexe=("$localvimsdir/vim-bin/origvims" "$VIMS_FLAVOR")
+
+# unset environment variables that may interfere with the bootstrap process
+
+# uppercase all characters of VIMS_FLAVOR
+envs_to_unset=(${VIMS_FLAVOR^^} MYVIMRC MYGVIMRC VIMRUNTIME VIMINIT EXINIT)
+envs_undocumented_to_unset=(MYNVIMRC NVIMRUNTIME NVIMINIT)
+for envvar in "${envs_to_unset[@]}"; do
+    unset "$envvar"
+done
+for envvar in "${envs_undocumented_to_unset[@]}"; do
+    unset "$envvar"
+done
+
+# echo VIM: $VIM
+# echo NVIM: $NVIM
+# echo MYVIMRC: $MYVIMRC 
+# echo MYGVIMRC: $MYGVIMRC 
+echo VIMRUNTIME: $VIMRUNTIME 
+# echo VIMINIT: $VIMINIT 
+# echo EXINIT: $EXINIT
+
+# for archive and later purposes (unused now effectively 2023/07/03)
+export VIMINIT_ORIG="$VIMINIT"
+
+# the sourced file knows how to call all registered layer's rc files
+# this sets up vim with the knowledge which RC to run like it's the vanilla one
+# the VIMINIT variable is sourced as part of, and overriding any other directives, of vim/nvim startup rc process
+export VIMINIT="source $localvimsdir/vimsrc_bootstrap.vim"
+
+# the first --cmd is given: bootstrap yourself!
+# upstream layers will add their own --cmd directives here to contribute to the VIMINIT rc process.
+"${origvimexe[@]}" --cmd "source $localvimsdir/bootstrap_RTP.vim" "$@"
