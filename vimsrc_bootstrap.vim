@@ -33,7 +33,14 @@ if ! exists("g:vimruntime.ignore_further_bootstrapping") || g:vimruntime.ignore_
         let g:vimruntime.bootstrap.vimrc.sourced_lastrun = []
         " try
         for rcfile in g:vimruntime.stock_vim_init.vimrc_spec.rc
-            execute printf("source %s", rcfile)
+            " TODO: there should be ways to make a rcfile optional!
+            if filereadable(rcfile)
+                execute printf("source %s", rcfile)
+            else
+                if index(g:vimruntime.stock_vim_init.vimrc_spec.rc_is_optional, rcfile) == -1
+                    throw "vimrc_spec.rc contains a non-existent file that's non-optional: ".rcfile
+                endif
+            endif
             call add(g:vimruntime.bootstrap.vimrc.sourced, rcfile)
             call add(g:vimruntime.bootstrap.vimrc.sourced_lastrun, rcfile)
         endfor
@@ -68,4 +75,5 @@ if ! exists("g:vimruntime.ignore_further_bootstrapping") || g:vimruntime.ignore_
         " ReadPathE &packpath
 endif
 
+exec printf("source %s/simpleide.vim", expand('<sfile>:p:h'))
 call _SourceAllVimrc()

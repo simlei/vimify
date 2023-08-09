@@ -1,11 +1,13 @@
-    command! -bar -nargs=1 AddRcVim  call add(g:vimruntime.stock_vim_init.vimrc_spec.rc, <q-args>)
-    command! -bar -nargs=1 AddRcGvim call add (g:vimruntime.stock_vim_init.gvimrc_spec.rc, <q-args>)
-    command! -bar -nargs=1 AddRcDir  AddRcVim <args>/vimrc | AddRcGvim <args>/gvimrc
-    command! -bar -nargs=1 AddRcLayer  call AddRcLayer(<q-args>)
-    command! -nargs=1 -bar PathAddPP call add(g:vimruntime.stock_vim_init.prependPPList, <f-args>)
-    command! -nargs=1 -bar PathAddRTP call add(g:vimruntime.stock_vim_init.prependRTPList, <f-args>)
-    command! -nargs=1 -bar PathAddAfterPP call add(g:vimruntime.stock_vim_init.appendPPList, <f-args>)
-    command! -nargs=1 -bar PathAddAfterRTP call add(g:vimruntime.stock_vim_init.appendRTPList, <f-args>)
+    command! -bar -nargs=1 AddRcVim  call AddRcVim(<q-args>, 0)
+    command! -bar -nargs=1 AddRcGvim call AddRcGvim(<q-args>, 0)
+    command! -bar -nargs=1 AddRcLayer  call AddRcLayer(<q-args>, 0)
+
+    command! -bar -nargs=+ AddIDEDir  call AddIDEDir(<f-args>)
+
+    command! -nargs=1 -bar PathAddPP call PathAddPP(<f-args>)
+    command! -nargs=1 -bar PathAddRTP call PathAddRTP(<f-args>)
+    command! -nargs=1 -bar PathAddAfterPP call PathAddAfterPP(<f-args>)
+    command! -nargs=1 -bar PathAddAfterRTP call PathAddAfterRTP(<f-args>)
     command! -nargs=1 -bar Src execute printf("source %s", _cmdPath(<f-args>))
     command! -bang -nargs=1 ReadPathE echon join(['# '.<q-args>] + split(eval(<f-args>), ","), "\n")."\n"
     command! -bang -nargs=1 ReadPath call append(line('.'), ['# '.<q-args>] + split(eval(<f-args>), ","))
@@ -28,22 +30,46 @@ endif
         endif
     endfun
 
-    fun! AddRcLayer(dir) abort
-        exec printf("AddRcVim %s", a:dir . "/" . "shared" . "/vimrc")
-        exec printf("AddRcGvim %s", a:dir . "/" . "shared" . "/gvimrc")
-        exec printf("AddRcVim %s", a:dir . "/" . VimFlavor() . "/vimrc")
-        exec printf("AddRcGvim %s", a:dir . "/" . VimFlavor() . "/gvimrc")
-        exec printf("PathAddPP %s", a:dir . "/" . "shared")
-        exec printf("PathAddPP %s", a:dir . "/" . VimFlavor())
-        exec printf("PathAddAfterRTP %s", a:dir . "/shared")
-        exec printf("PathAddPP %s", a:dir . "/" . VimFlavor())
-        exec printf("PathAddAfterRTP %s", a:dir . "/" . "shared" . "/after")
-        exec printf("PathAddAfterRTP %s", a:dir . "/" . VimFlavor() . "/after")
+
+    fun! AddIDEDir(dir, projectname) abort
+        call AddRcLayer(a:dir . "/layer", 1)
+        call AddRcVim(a:dir . "/vimrc", 0)
+        call AddRcGvim(a:dir . "/gvimrc", 1)
     endfun
 
-    fun! AddRcFolderVim(dir) abort
-        call add(g:vimruntime.stock_vim_init.vimrc_spec.rc, a:dir."/vimrc")
+    fun! AddRcVim(rcfile, optional) abort
+        call add(g:vimruntime.stock_vim_init.vimrc_spec.rc, a:rcfile)
     endfun
+    fun! AddRcGvim(rcfile, optional) abort
+        call add(g:vimruntime.stock_vim_init.gvimrc_spec.rc, a:rcfile)
+    endfun
+    fun! AddRcLayer(dir, optional) abort
+        call AddRcVim(a:dir . "/" . "shared" . "/vimrc", a:optional)
+        call AddRcGvim(a:dir . "/" . "shared" . "/gvimrc", 1)
+        call AddRcVim(a:dir . "/" . VimFlavor() . "/vimrc", a:optional)
+        call AddRcGvim(a:dir . "/" . VimFlavor() . "/gvimrc", 1)
+        call PathAddPP(a:dir . "/" . "shared")
+        call PathAddPP(a:dir . "/" . VimFlavor())
+        call PathAddAfterRTP(a:dir . "/shared")
+        call PathAddPP(a:dir . "/" . VimFlavor())
+        call PathAddAfterRTP(a:dir . "/" . "shared" . "/after")
+        call PathAddAfterRTP(a:dir . "/" . VimFlavor() . "/after")
+    endfun
+
+    fun! PathAddPP(arg) abort
+        call add(g:vimruntime.stock_vim_init.prependPPList, a:arg)
+    endfun
+    fun! PathAddRTP(arg) abort
+        call add(g:vimruntime.stock_vim_init.prependRTPList, a:arg)
+    endfun
+    fun! PathAddAfterPP(arg) abort
+        call add(g:vimruntime.stock_vim_init.appendPPList, a:arg)
+    endfun
+    fun! PathAddAfterRTP(arg) abort
+        call add(g:vimruntime.stock_vim_init.appendRTPList, a:arg)
+    endfun
+
+
     " fun! _AdaptToBuildInSourcetree() abort
 	    " " detect if vim is used just after "configure; make" and change runtimepath accordingly
 	    " if ! empty(glob(g:_vim_instance.probable_source_rtdir))
@@ -174,6 +200,7 @@ if ! exists('g:_vim_instance')
     " These are for vimrc/gvimrc sourcing
     let g:vimruntime.stock_vim_init.vimrc_spec = {}
     let g:vimruntime.stock_vim_init.vimrc_spec.rc = []
+    let g:vimruntime.stock_vim_init.vimrc_spec.rc_is_optional = []
     let g:vimruntime.stock_vim_init.gvimrc_spec = {}
     let g:vimruntime.stock_vim_init.gvimrc_spec.rc = []
     " These are for rewriting the stock RTP
