@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+_declare_dirvar() { local _dir="$(readlink -f "${BASH_SOURCE[0]}")"; _dir="${_dir%/*}"; local varname="${1:-dir}"; local count="${2:-1}"; while [[ "$count" -gt 0 ]]; do _dir="${_dir%/*}"; let count-- || :; done; eval "$varname"'="$_dir"'; }
+_declare_dirvar projdir 1
+_declare_dirvar projbasedir 2
+
+_projname="@PROJ_NAME@"
+_projname_unsubstituted='@'PROJ_NAME'@' # won't be substituted and serves as a marker that something went wrong during setup.
+
+if [[ "$_projname" == "$_projname_unsubstituted" ]]; then
+    echo "ERROR: _projname not substituted in $0."
+    exit 1
+fi
+
+# VIMS_PROJECT_MANUAL_CONFIG_MARKER -- configure which vims is the base for putting the ide layer on
+_projname_ide_basecmd=( @PROJ_IDE_CMD@ )
+_projidecmd_unsubsituted='@'PROJ_IDE_CMD'@' # won't be substituted and serves as a marker that something went wrong during setup.
+
+if [[ "${_projname_ide_basecmd[0]}" == "$projidecmd_unsubstituted" ]]; then
+    echo "ERROR: _projname_ide_basecmd not substituted in $0."
+    exit 1
+fi
+
+"${_projname_ide_basecmd[@]}" --cmd "AddIDEDir $projdir/vims $_projname" "$@"
+

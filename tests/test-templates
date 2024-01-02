@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+_declare_dirvar() { local _dir="$(readlink -f "${BASH_SOURCE[0]}")"; _dir="${_dir%/*}"; local varname="${1:-dir}"; local count="${2:-1}"; while [[ "$count" -gt 0 ]]; do _dir="${_dir%/*}"; let count-- || :; done; eval "$varname"'="$_dir"'; }
+_declare_dirvar project__vims__Droot 1
+
+set -eou pipefail
+source "$project__vims__Droot/bash/lib.bash"
+
+template_skel="$project__vims__Droot/project_skel/@PROJ_DIR_NAME@"
+destination="/tmp/templatetest"
+
+rm -rf "$destination" || :
+mkdir -p "$destination"
+
+variables=(
+    "PROJ_NAME=templatetest"
+    "PROJ_DIR_NAME=.tsproject"
+    "PROJ_IDE_CMD=newvim"
+)
+
+# bashtemplate_apply "$template_skel" "$destination" "${variables[@]}"
+# tree -a "$destination"
+# cat "$destination/.tsproject/vim-bin/templatetest_ide"
+
+rm -rf /tmp/test2
+mkdir -p /tmp/test2
+rm -rf /tmp/test1
+mkdir -p /tmp/test1
+# write a heredoc with helloworld in it to /tmp/test1/@PROJ_NAME@_a
+cat <<EOF > /tmp/test1/@PROJ_NAME@_a
+here should be substituted: PROJ_NAME=@PROJ_NAME@
+here should be substituted: PROJ_DIR_NAME=@PROJ_DIR_NAME@
+here should be substituted: PROJ_IDE_CMD=@PROJ_IDE_CMD@
+EOF
+
+bashtemplate_apply "/tmp/test1/@PROJ_NAME@_a" /tmp/test2 "${variables[@]}"
+echo ===================
+cat /tmp/test2/templatetest_a
+
+exit 0

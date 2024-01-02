@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+_declare_dirvar() { local _dir="$(readlink -f "${BASH_SOURCE[0]}")"; _dir="${_dir%/*}"; local varname="${1:-dir}"; local count="${2:-1}"; while [[ "$count" -gt 0 ]]; do _dir="${_dir%/*}"; let count-- || :; done; eval "$varname"'="$_dir"'; }
+_declare_dirvar project__vims__Droot 1
+
+set -eou pipefail
+source "$project__vims__Droot/bash/lib.bash"
+
+proj_base_dir="$PWD"
+proj_dir_name=".tsproject"
+
+proj_name=
+proj_ide_cmd=newvim
+nobashrc=0
+while [[ $# -gt 0 ]]; do
+    if [[ "$1" =~ ^--nobashrc$ ]]; then
+        nobashrc=1
+        shift
+        continue
+    fi
+    if [[ "$1" =~ ^--proj_dir_name=(.*)$ ]]; then
+        proj_dir_name="${BASH_REMATCH[1]}"
+        shift
+        continue
+    fi
+    if [[ "$1" =~ ^--proj_ide_cmd=(.*)$ ]]; then
+        proj_ide_cmd="${BASH_REMATCH[1]}"
+        shift
+        continue
+    fi
+    if [[ -z "$proj_name" ]]; then
+        if [[ "$1" =~ ^[a-zA-Z_][0-9a-zA-Z_]*$ ]]; then
+            proj_name="$1"
+            shift
+            continue
+        else
+            echo "$0: Invalid project name: $1" >&2
+            exit 1
+        fi
+    fi
+    echo "$0: Invalid argument: $1" >&2
+    exit 1
+done
+
+# contiguous on the template invocation to put it really there
+proj_def_path="$proj_base_dir/$proj_dir_name"
+
+
+skel_path="$project__vims__Droot/project_skel/@PROJ_DIR_NAME@"
+
+bashtemplate_apply "$skel_path" "$proj_base_dir" "PROJ_NAME=$proj_name" "PROJ_DIR_NAME=$proj_dir_name" "PROJ_IDE_CMD=$proj_ide_cmd"
+# vim -c "call feedkeys(':%s/@PROJDIRNAME@/$foldername/g:%s/@PROJNAME@//gODOD')" ./"$foldername"/bashrc-interim.bash \
+
+if [[ $nobashrc == 0 ]]; then
+    echo "source $proj_def_path/bashrc-interim.bash" >> "$HOME/.bashrc"
+fi
+

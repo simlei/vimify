@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+_declare_dirvar() { local _dir="${BASH_SOURCE[0]}"; _dir="${_dir%/*}"; local varname="${1:-dir}"; local count="${2:-1}"; while [[ "$count" -gt 0 ]]; do _dir="${_dir%/*}"; let count-- || :; done; eval "$varname"'="$_dir"'; }
+_declare_dirvar projdir 1
+
+nvim --cmd "let g:_simpleide_projname='vims_ide'" --cmd "AddRcLayer $projdir/vim" "$@"
+

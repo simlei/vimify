@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+_declare_dirvar() { local _dir="$(readlink -f "${BASH_SOURCE[0]}")"; _dir="${_dir%/*}"; local varname="${1:-dir}"; local count="${2:-1}"; while [[ "$count" -gt 0 ]]; do _dir="${_dir%/*}"; let count-- || :; done; eval "$varname"'="$_dir"'; }
+_declare_dirvar project__vims__Droot 1
+
+set -eou pipefail
+
+source "$project__vims__Droot/bash/lib.bash"
+
+projectdrop_cmd="$project__vims__Droot/bin/vims_projectdrop"
+
+testprojectroot="/tmp/testproject"
+proj_name=testproject
+rm -rf "$testprojectroot" || :
+mkdir -p "$testprojectroot"
+( 
+    cd "$testprojectroot"
+    "$projectdrop_cmd" --nobashrc "$proj_name"
+)
+tree -a "$testprojectroot"
+xterminvocation "$testprojectroot/.tsproject/vim-bin/${proj_name}_ide"
