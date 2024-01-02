@@ -72,17 +72,17 @@ endif
 
     " fun! _AdaptToBuildInSourcetree() abort
 	    " " detect if vim is used just after "configure; make" and change runtimepath accordingly
-	    " if ! empty(glob(g:_vim_instance.probable_source_rtdir))
-		" echom "found vim source runtime to be more precise: " . g:_vim_instance.probable_source_rtdir
-		" let $VIMRUNTIME=g:_vim_instance.probable_source_rtdir
-		" let $VIM=g:_vim_instance.probable_source_vimdir
+	    " if ! empty(glob(g:_vim_instance.probable_runtimedir))
+		" echom "found vim source runtime to be more precise: " . g:_vim_instance.probable_runtimedir
+		" let $VIMRUNTIME=g:_vim_instance.probable_runtimedir
+		" let $VIM=g:_vim_instance.probable_install_prefix
 		" " echom "rtp orig:" . &rtp
-		" let &runtimepath = substitute(&runtimepath, '\V'.escape(g:_vim_instance.orig_VIMRUNTIME, '\'), g:_vim_instance.probable_source_rtdir, 'g')
-		" let &runtimepath = substitute(&runtimepath, '\V'.escape(g:_vim_instance.orig_VIM, '\'), g:_vim_instance.probable_source_vimdir, 'g')
-		" let &packpath = substitute(&packpath, '\V'.escape(g:_vim_instance.orig_VIMRUNTIME, '\'), g:_vim_instance.probable_source_rtdir, 'g')
-		" let &packpath = substitute(&packpath, '\V'.escape(g:_vim_instance.orig_VIM, '\'), g:_vim_instance.probable_source_vimdir, 'g')
-		" let &helpfile = substitute(&helpfile, '\V'.escape(g:_vim_instance.orig_VIMRUNTIME, '\'), g:_vim_instance.probable_source_rtdir, 'g')
-		" let &helpfile = substitute(&helpfile, '\V'.escape(g:_vim_instance.orig_VIM, '\'), g:_vim_instance.probable_source_vimdir, 'g')
+		" let &runtimepath = substitute(&runtimepath, '\V'.escape(g:_vim_instance.orig_VIMRUNTIME, '\'), g:_vim_instance.probable_runtimedir, 'g')
+		" let &runtimepath = substitute(&runtimepath, '\V'.escape(g:_vim_instance.orig_VIM, '\'), g:_vim_instance.probable_install_prefix, 'g')
+		" let &packpath = substitute(&packpath, '\V'.escape(g:_vim_instance.orig_VIMRUNTIME, '\'), g:_vim_instance.probable_runtimedir, 'g')
+		" let &packpath = substitute(&packpath, '\V'.escape(g:_vim_instance.orig_VIM, '\'), g:_vim_instance.probable_install_prefix, 'g')
+		" let &helpfile = substitute(&helpfile, '\V'.escape(g:_vim_instance.orig_VIMRUNTIME, '\'), g:_vim_instance.probable_runtimedir, 'g')
+		" let &helpfile = substitute(&helpfile, '\V'.escape(g:_vim_instance.orig_VIM, '\'), g:_vim_instance.probable_install_prefix, 'g')
 		" " echom "rtp afte:" . &rtp
 	    " endif
     " endf
@@ -164,9 +164,46 @@ if ! exists('g:_vim_instance')
     else
         let g:_vim_instance.executable = resolve(g:_vim_instance.cmd)
     endif
-    echom "DBG: probable vim executable=" . g:_vim_instance.executable
-    let g:_vim_instance.probable_source_vimdir = fnamemodify(g:_vim_instance.executable, ":p:h")."/.."
-    let g:_vim_instance.probable_source_rtdir  = g:_vim_instance.probable_source_vimdir . "/runtime"
+    " echom "DBG: probable vim executable=" . g:_vim_instance.executable
+    let g:_vim_instance.probable_install_prefix = fnamemodify(g:_vim_instance.executable, ":p:h")."/.."
+    let _probable_vim_runtimedirs=[]
+    let _probable_nvim_runtimedirs=[]
+
+    call add(_probable_vim_runtimedirs, g:_vim_instance.probable_install_prefix . "/share/vim/vim92")
+    call add(_probable_vim_runtimedirs, g:_vim_instance.probable_install_prefix . "/share/vim/vim91")
+    call add(_probable_vim_runtimedirs, g:_vim_instance.probable_install_prefix . "/share/vim/vim90")
+    call add(_probable_vim_runtimedirs, g:_vim_instance.probable_install_prefix . "/share/vim/vim82")
+    call add(_probable_vim_runtimedirs, g:_vim_instance.probable_install_prefix . "/share/vim/vim81")
+    call add(_probable_vim_runtimedirs, g:_vim_instance.probable_install_prefix . "/share/vim/vim80")
+    call add(_probable_vim_runtimedirs, g:_vim_instance.probable_install_prefix . "/runtime")
+
+    call add(_probable_nvim_runtimedirs, g:_vim_instance.probable_install_prefix . "/share/nvim/runtime")
+
+    let __probable_runtimedirs = []
+    if has('nvim')
+        let __probable_runtimedirs = _probable_nvim_runtimedirs
+    else
+        let __probable_runtimedirs = _probable_vim_runtimedirs
+    endif
+    for probable_runtimedir in __probable_runtimedirs
+        if isdirectory(probable_runtimedir)
+            if has('nvim')
+                if ! empty(glob(probable_runtimedir . "/filetype.lua"))
+                    let g:_vim_instance.probable_runtimedir = probable_runtimedir
+                    break
+                endif
+            else
+                if ! empty(glob(probable_runtimedir . "/filetype.vim"))
+                    let g:_vim_instance.probable_runtimedir = probable_runtimedir
+                    break
+                endif
+            endif
+        endif
+    endfor
+    if ! exists('g:_vim_instance.probable_runtimedir')
+        echoerr "ERROR: could not find a probable runtime directory. tried: ".join(__probable_runtimedirs, ", ")
+    endif
+
     let g:_vim_instance.orig_VIMRUNTIME = $VIMRUNTIME
     let g:_vim_instance.orig_VIM = $VIM
     " echom "DBG: checking if nvim... " . has('nvim')
@@ -212,8 +249,11 @@ if ! exists('g:_vim_instance')
     let g:vimruntime.stock_vim_init.appendPPList = []
     let g:vimruntime.stock_vim_init.prependPPList = []
 
+    if strlen(g:_vim_instance.probable_runtimedir) > 0
+        call add(g:vimruntime.stock_vim_init.newRTPList, g:_vim_instance.probable_runtimedir)
+    endif
     for p in split(g:vimruntime.stock_vim_init.origRTP, ",")
-        " echom "checking ".p." for inclusion in ".g:_vim_instance.probable_source_rtdir
+        " echom "checking ".p." for inclusion in ".g:_vim_instance.probable_runtimedir
         if _KeepPathPart(p, 'runtimepath')
             call add(g:vimruntime.stock_vim_init.newRTPList, p)
         else
