@@ -164,6 +164,7 @@ if ! exists('g:_vim_instance')
     else
         let g:_vim_instance.executable = resolve(g:_vim_instance.cmd)
     endif
+    echom "DBG: probable vim executable=" . g:_vim_instance.executable
     let g:_vim_instance.probable_source_vimdir = fnamemodify(g:_vim_instance.executable, ":p:h")."/.."
     let g:_vim_instance.probable_source_rtdir  = g:_vim_instance.probable_source_vimdir . "/runtime"
     let g:_vim_instance.orig_VIMRUNTIME = $VIMRUNTIME
