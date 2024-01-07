@@ -250,13 +250,19 @@ if ! exists('g:_vim_instance')
     let g:vimruntime.stock_vim_init.prependPPList = []
 
     if strlen(g:_vim_instance.probable_runtimedir) > 0
-        call add(g:vimruntime.stock_vim_init.newRTPList, g:_vim_instance.probable_runtimedir)
+        if ! has('nvim')
+            call add(g:vimruntime.stock_vim_init.newRTPList, g:_vim_instance.probable_runtimedir)
+        else
+            " call add(g:vimruntime.stock_vim_init.newRTPList, "/home/user/neovim/runtime")
+
+        endif
     endif
     for p in split(g:vimruntime.stock_vim_init.origRTP, ",")
         " echom "checking ".p." for inclusion in ".g:_vim_instance.probable_runtimedir
         if _KeepPathPart(p, 'runtimepath')
             call add(g:vimruntime.stock_vim_init.newRTPList, p)
         else
+            " echom 'not keeping path part: ' . p
         endif
     endfor
     for p in split(g:vimruntime.stock_vim_init.origPP, ",")

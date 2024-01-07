@@ -7,14 +7,25 @@ fun! _SetupIDEProjectVars() abort
         let g:project.vim.dispatch = {}
     " endif
 endf
-fun! _SetupIDEProjectFromProjectRC(project_rc) abort
-    let shared_rc_abs = fnamemodify(a:shared_rc, ":p")
+fun! _SetupIDEProjectFromProjectRCAndRoot(project_rc, root) abort
+    let shared_rc_abs = fnamemodify(a:project_rc, ":p")
     return _SetupIDEProject(
-                \project_rc, 
-                \fnamemodify(project_rc, ":h") . "/layer",
-                \fnamemodify(project_rc, ":h:h"),
-                \fnamemodify(project_rc, ":h:h:h"),
-                \fnamemodify(project_rc, ":h:h:h:h")
+                \shared_rc_abs, 
+                \0,
+                \fnamemodify(shared_rc_abs, ":h"),
+                \fnamemodify(shared_rc_abs, ":h:h"),
+                \a:root
+                \)
+endfun
+
+fun! _SetupIDEProjectFromProjectRC(project_rc) abort
+    let shared_rc_abs = fnamemodify(a:project_rc, ":p")
+    return _SetupIDEProject(
+                \shared_rc_abs, 
+                \fnamemodify(shared_rc_abs, ":h") . "/layer",
+                \fnamemodify(shared_rc_abs, ":h:h"),
+                \fnamemodify(shared_rc_abs, ":h:h:h"),
+                \fnamemodify(shared_rc_abs, ":h:h:h:h")
                 \)
 endfun
 fun! _SetupIDEProject(
@@ -27,6 +38,7 @@ fun! _SetupIDEProject(
 
     call _SetupIDEProjectVars()
 
+    echom "the project root dir is ". a:proj_root_d
     let g:project.loc.Droot = a:proj_root_d
     let g:project.loc.Dprojdef = a:proj_def_d
     let g:project.loc.Dide = a:proj_vim_d
@@ -58,6 +70,7 @@ fun! _SetupIDEProject(
     nmap <F10>S :source <C-r>=g:project.vim.loc.Dsessions<CR>/session_
     nmap <F10>s :Obsession! <C-r>=g:project.vim.loc.Dsessions<CR>/session_
 
+    exec printf("echom 'cd %s'", fnameescape(g:project.loc.Droot))
     exec printf("cd %s", fnameescape(g:project.loc.Droot))
 
     nmap <F10>rcpe :e <C-r>=g:project.vim.loc.F_rc<CR><CR>
