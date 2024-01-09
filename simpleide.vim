@@ -38,7 +38,6 @@ fun! _SetupIDEProject(
 
     call _SetupIDEProjectVars()
 
-    echom "the project root dir is ". a:proj_root_d
     let g:project.loc.Droot = a:proj_root_d
     let g:project.loc.Dprojdef = a:proj_def_d
     let g:project.loc.Dide = a:proj_vim_d
@@ -70,7 +69,6 @@ fun! _SetupIDEProject(
     nmap <F10>S :source <C-r>=g:project.vim.loc.Dsessions<CR>/session_
     nmap <F10>s :Obsession! <C-r>=g:project.vim.loc.Dsessions<CR>/session_
 
-    exec printf("echom 'cd %s'", fnameescape(g:project.loc.Droot))
     exec printf("cd %s", fnameescape(g:project.loc.Droot))
 
     nmap <F10>rcpe :e <C-r>=g:project.vim.loc.F_rc<CR><CR>
