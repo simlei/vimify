@@ -1,6 +1,6 @@
     command! -bar -nargs=1 AddRcVim  call AddRcVim(<q-args>, 0)
     command! -bar -nargs=1 AddRcGvim call AddRcGvim(<q-args>, 0)
-    command! -bar -nargs=1 AddRcLayer  call AddRcLayer(<q-args>, 0)
+    command! -bar -nargs=1 AddRcLayer  call AddRcLayer(<q-args>, 1)
 
     command! -bar -nargs=+ AddIDEDir  call AddIDEDir(<f-args>)
 
@@ -39,6 +39,9 @@ endif
 
     fun! AddRcVim(rcfile, optional) abort
         call add(g:vimruntime.stock_vim_init.vimrc_spec.rc, a:rcfile)
+        if a:optional == 1
+            call add(g:vimruntime.stock_vim_init.vimrc_spec.rc_is_optional, a:rcfile)
+        endif
     endfun
     fun! AddRcGvim(rcfile, optional) abort
         call add(g:vimruntime.stock_vim_init.gvimrc_spec.rc, a:rcfile)

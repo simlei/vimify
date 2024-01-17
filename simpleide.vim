@@ -18,6 +18,19 @@ fun! _SetupIDEProjectFromProjectRCAndRoot(project_rc, root) abort
                 \)
 endfun
 
+fun! IDELayerHere(project_rc, project_root) abort
+    let shared_rc_abs = fnamemodify(a:project_rc, ":p")
+    let ide_def_rc = fnamemodify(a:project_rc, ":p")
+    let ide_layer_dir = fnamemodify(a:project_rc, ":p:h")
+    return _SetupIDEProject(
+                \ide_def_rc, 
+                \ide_layer_dir,
+                \ide_layer_dir,
+                \ide_layer_dir,
+                \a:project_root
+                \)
+endfun
+
 fun! _SetupIDEProjectFromProjectRC(project_rc) abort
     let shared_rc_abs = fnamemodify(a:project_rc, ":p")
     return _SetupIDEProject(
